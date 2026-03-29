@@ -1,7 +1,7 @@
 #ifndef RTC_H
 #define RTC_H
 
-#include "pinout.h"
+#include "stm32f1xx_hal.h"
 #include <stdint.h>
 
 typedef struct {

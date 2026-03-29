@@ -1,3 +1,4 @@
+#include "stm32f1xx_hal.h"
 #include "pinout.h"
 #include "rtc.h"
 #include "encoder.h"
@@ -10,7 +11,6 @@ typedef enum {
     MODE_MENU,
     MODE_SET_TIME_H,
     MODE_SET_TIME_M,
-    MODE_SET_TIME_S,
     MODE_SET_ALARM_H,
     MODE_SET_ALARM_M,
     MODE_TOGGLE_ALARM
@@ -22,14 +22,29 @@ static uint8_t alarm_h = 7, alarm_m = 0;
 static bool alarm_enabled = false;
 static int8_t menu_selection = 0;
 
-volatile uint32_t ms_ticks = 0;
-void SysTick_Handler(void) {
-    ms_ticks++;
+void SystemClock_Config(void) {
+    RCC_OscInitTypeDef RCC_OscInitStruct = {0};
+    RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
+
+    RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
+    RCC_OscInitStruct.HSEState = RCC_HSE_ON;
+    RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
+    RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
+    RCC_OscInitStruct.PLL.PLLMUL = RCC_PLL_MUL9;
+    HAL_RCC_OscConfig(&RCC_OscInitStruct);
+
+    RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK|RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
+    RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
+    RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
+    RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV2;
+    RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
+    HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_2);
 }
 
 int main(void) {
-    SystemInit();
-    SysTick_Config(SystemCoreClock / 1000);
+    HAL_Init();
+    SystemClock_Config();
+
     RTC_Init();
     ENC_Init();
     EPD_Init();
@@ -45,7 +60,6 @@ int main(void) {
                     current_mode = MODE_MENU;
                     UI_DrawMenu(menu_selection);
                 } else {
-                    // Refresh screen every 60 seconds (or on change)
                     static uint8_t last_m = 99;
                     if (current_time.minutes != last_m) {
                         last_m = current_time.minutes;
@@ -70,7 +84,6 @@ int main(void) {
                         UI_DrawSetAlarm(alarm_h, alarm_m, 0);
                     } else if (menu_selection == 2) {
                         current_mode = MODE_TOGGLE_ALARM;
-                        // Mode toggling handled in next cycle
                     }
                 }
                 break;
@@ -117,12 +130,14 @@ int main(void) {
                 break;
         }
 
-        // Handle Alarm trigger
         if (alarm_enabled && current_time.hours == alarm_h && current_time.minutes == alarm_m && current_time.seconds == 0) {
-            // Beep (if buzzer is connected)
+            // Alarm logic
         }
 
-        // Delay to prevent CPU hogging
-        for(volatile int i=0; i<100000; i++);
+        HAL_Delay(10);
     }
+}
+
+void SysTick_Handler(void) {
+    HAL_IncTick();
 }

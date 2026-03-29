@@ -57,6 +57,10 @@ void UI_DrawSetTime(RTC_TimeTypeDef *time, int8_t field) {
     sprintf(buf, "%02d:%02d:%02d", time->hours, time->minutes, time->seconds);
     EPD_DrawText(30, 50, buf, 16, EPD_COLOR_BLACK);
 
+    // Draw cursor (underline) under active field
+    if (field == 0) EPD_DrawText(30, 66, "__", 16, EPD_COLOR_BLACK);
+    else if (field == 1) EPD_DrawText(54, 66, "__", 16, EPD_COLOR_BLACK);
+
     EPD_DisplayBW();
     EPD_Clear(EPD_COLOR_WHITE);
     EPD_DisplayRed();
@@ -69,6 +73,10 @@ void UI_DrawSetAlarm(uint8_t h, uint8_t m, int8_t field) {
     EPD_DrawText(10, 10, "USTAW BUDZIK:", 16, EPD_COLOR_BLACK);
     sprintf(buf, "%02d:%02d", h, m);
     EPD_DrawText(30, 50, buf, 16, EPD_COLOR_BLACK);
+
+    // Draw cursor (underline) under active field
+    if (field == 0) EPD_DrawText(30, 66, "__", 16, EPD_COLOR_BLACK);
+    else if (field == 1) EPD_DrawText(54, 66, "__", 16, EPD_COLOR_BLACK);
 
     EPD_DisplayBW();
     EPD_Clear(EPD_COLOR_WHITE);

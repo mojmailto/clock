@@ -1,7 +1,7 @@
 #ifndef EPAPER_H
 #define EPAPER_H
 
-#include "pinout.h"
+#include "stm32f1xx_hal.h"
 #include <stdint.h>
 
 #define EPD_WIDTH  128

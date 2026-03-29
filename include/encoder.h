@@ -1,7 +1,7 @@
 #ifndef ENCODER_H
 #define ENCODER_H
 
-#include "pinout.h"
+#include "stm32f1xx_hal.h"
 #include <stdint.h>
 #include <stdbool.h>
 

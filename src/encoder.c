@@ -3,58 +3,36 @@
 
 static volatile int32_t encoder_delta = 0;
 static volatile bool button_pressed = false;
-static volatile uint32_t last_irq_time = 0;
 
 void ENC_Init(void) {
-    GPIO_InitTypeDef GPIO_InitStructure;
-    EXTI_InitTypeDef EXTI_InitStructure;
-    NVIC_InitTypeDef NVIC_InitStructure;
+    GPIO_InitTypeDef GPIO_InitStruct = {0};
 
-    RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOB | RCC_APB2Periph_AFIO, ENABLE);
+    __HAL_RCC_GPIOB_CLK_ENABLE();
 
-    GPIO_InitStructure.GPIO_Pin = ENC_CLK_PIN | ENC_DT_PIN | ENC_SW_PIN;
-    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPU;
-    GPIO_Init(GPIOB, &GPIO_InitStructure);
+    GPIO_InitStruct.Pin = ENC_CLK_PIN | ENC_DT_PIN | ENC_SW_PIN;
+    GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
+    GPIO_InitStruct.Pull = GPIO_PULLUP;
+    HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
-    GPIO_EXTILineConfig(GPIO_PortSourceGPIOB, GPIO_PinSource12);
-    GPIO_EXTILineConfig(GPIO_PortSourceGPIOB, GPIO_PinSource14);
-
-    EXTI_InitStructure.EXTI_Line = EXTI_Line12 | EXTI_Line14;
-    EXTI_InitStructure.EXTI_Mode = EXTI_Mode_Interrupt;
-    EXTI_InitStructure.EXTI_Trigger = EXTI_Trigger_Falling;
-    EXTI_InitStructure.EXTI_LineCmd = ENABLE;
-    EXTI_Init(&EXTI_InitStructure);
-
-    NVIC_InitStructure.NVIC_IRQChannel = EXTI15_10_IRQn;
-    NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0;
-    NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
-    NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
-    NVIC_Init(&NVIC_InitStructure);
+    HAL_NVIC_SetPriority(EXTI15_10_IRQn, 0, 0);
+    HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);
 }
 
-extern volatile uint32_t ms_ticks;
-
-void EXTI15_10_IRQHandler(void) {
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
     static uint32_t last_irq_time = 0;
-    uint32_t current_time = ms_ticks;
+    uint32_t current_time = HAL_GetTick();
 
-    if (current_time - last_irq_time < 10) { // 10ms debounce
-        EXTI_ClearITPendingBit(EXTI_Line12 | EXTI_Line14);
-        return;
-    }
+    if (current_time - last_irq_time < 10) return;
     last_irq_time = current_time;
 
-    if (EXTI_GetITStatus(EXTI_Line12) != RESET) {
-        if (GPIO_ReadInputDataBit(ENC_DT_PORT, ENC_DT_PIN) != RESET) {
+    if (GPIO_Pin == ENC_CLK_PIN) {
+        if (HAL_GPIO_ReadPin(ENC_DT_PORT, ENC_DT_PIN) == GPIO_PIN_SET) {
             encoder_delta++;
         } else {
             encoder_delta--;
         }
-        EXTI_ClearITPendingBit(EXTI_Line12);
-    }
-    if (EXTI_GetITStatus(EXTI_Line14) != RESET) {
+    } else if (GPIO_Pin == ENC_SW_PIN) {
         button_pressed = true;
-        EXTI_ClearITPendingBit(EXTI_Line14);
     }
 }
 
