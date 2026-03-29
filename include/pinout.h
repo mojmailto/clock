@@ -2,14 +2,6 @@
 #define PINOUT_H
 
 /* Target STM32F103C6 is Low Density device */
-#ifndef STM32F10X_LD
-#define STM32F10X_LD
-#endif
-
-#ifndef USE_STDPERIPH_DRIVER
-#define USE_STDPERIPH_DRIVER
-#endif
-
 #include "stm32f10x.h"
 
 /* RTC: DS1307Z (I2C2) */

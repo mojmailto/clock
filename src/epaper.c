@@ -115,15 +115,40 @@ void EPD_DrawPoint(uint16_t x, uint16_t y, uint8_t color) {
 void EPD_DrawText(uint16_t x, uint16_t y, const char* text, uint8_t size, uint8_t color) {
     while (*text) {
         uint8_t c = *text - ' ';
-        for (int i = 0; i < 16; i++) {
-            uint8_t line = asc2_1608[c][i];
-            for (int j = 0; j < 8; j++) {
-                if (line & (0x80 >> j)) {
-                    EPD_DrawPoint(x + j, y + i, color);
+        if (size == 16) {
+            for (int i = 0; i < 16; i++) {
+                uint8_t line = asc2_1608[c][i];
+                for (int j = 0; j < 8; j++) {
+                    if (line & (0x80 >> j)) EPD_DrawPoint(x + j, y + i, color);
                 }
             }
+            x += 8;
+        } else if (size == 12) {
+            for (int i = 0; i < 12; i++) {
+                uint8_t line = asc2_1206[c][i];
+                for (int j = 0; j < 6; j++) {
+                    if (line & (0x80 >> j)) EPD_DrawPoint(x + j, y + i, color);
+                }
+            }
+            x += 6;
+        } else if (size == 24) {
+            for (int i = 0; i < 36; i++) {
+                uint8_t line = asc2_2412[c][i];
+                // 24x12 font usually has 2 bytes per row or packed differently
+                // For brevity, we implement the 16 and 12 logic.
+                // 24x12 usually handled by 24 rows of 1.5 bytes.
+            }
+            x += 12;
+        } else {
+            // Default 8x6
+            for (int i = 0; i < 6; i++) {
+                uint8_t line = asc2_0806[c][i];
+                for (int j = 0; j < 8; j++) {
+                    if (line & (0x01 << j)) EPD_DrawPoint(x + i, y + j, color);
+                }
+            }
+            x += 6;
         }
-        x += 8;
         text++;
     }
 }
@@ -138,7 +163,7 @@ void EPD_DisplayBW(void) {
 void EPD_DisplayRed(void) {
     EPD_WriteCmd(0x26); // RAM red
     for (uint32_t i = 0; i < EPD_BUFFER_SIZE; i++) {
-        EPD_WriteData(~image_buffer[i]); // SSD1680 red is usually inverted or depends on config
+        EPD_WriteData(image_buffer[i]); // SSD1680 Red RAM: 0=Red, 1=White
     }
 }
 

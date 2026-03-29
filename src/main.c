@@ -88,6 +88,7 @@ int main(void) {
                 else if (event == ENC_CLICK) {
                     RTC_SetTime(&current_time);
                     current_mode = MODE_NORMAL;
+                    UI_DrawMainScreen(&current_time, alarm_enabled, alarm_h, alarm_m);
                 }
                 UI_DrawSetTime(&current_time, 1);
                 break;
@@ -102,7 +103,10 @@ int main(void) {
             case MODE_SET_ALARM_M:
                 if (event == ENC_LEFT) alarm_m = (alarm_m > 0) ? alarm_m - 1 : 59;
                 else if (event == ENC_RIGHT) alarm_m = (alarm_m < 59) ? alarm_m + 1 : 0;
-                else if (event == ENC_CLICK) current_mode = MODE_NORMAL;
+                else if (event == ENC_CLICK) {
+                    current_mode = MODE_NORMAL;
+                    UI_DrawMainScreen(&current_time, alarm_enabled, alarm_h, alarm_m);
+                }
                 UI_DrawSetAlarm(alarm_h, alarm_m, 1);
                 break;
 
