@@ -32,14 +32,17 @@ void ENC_Init(void) {
     NVIC_Init(&NVIC_InitStructure);
 }
 
+extern volatile uint32_t ms_ticks;
+
 void EXTI15_10_IRQHandler(void) {
-    // Simple software debouncing using a counter-based delay (simulating time check)
-    static uint32_t debounce_cnt = 0;
-    debounce_cnt++;
-    if (debounce_cnt < 1000) {
-        // Clear pending bits and return early if "time" hasn't passed
-        // This is a crude simulation of debouncing without a global timer
+    static uint32_t last_irq_time = 0;
+    uint32_t current_time = ms_ticks;
+
+    if (current_time - last_irq_time < 10) { // 10ms debounce
+        EXTI_ClearITPendingBit(EXTI_Line12 | EXTI_Line14);
+        return;
     }
+    last_irq_time = current_time;
 
     if (EXTI_GetITStatus(EXTI_Line12) != RESET) {
         if (GPIO_ReadInputDataBit(ENC_DT_PORT, ENC_DT_PIN) != RESET) {

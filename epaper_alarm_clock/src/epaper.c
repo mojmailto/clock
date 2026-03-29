@@ -7,8 +7,7 @@
 
 static uint8_t image_buffer[EPD_BUFFER_SIZE];
 
-/* Fonts: using 8x16 font as example */
-extern const unsigned char asc2_1608[][16];
+#include "font.h"
 
 static void EPD_WaitBusy(void) {
     uint32_t timeout = 0xFFFF;
@@ -97,12 +96,20 @@ void EPD_Clear(uint8_t color) {
 }
 
 void EPD_DrawPoint(uint16_t x, uint16_t y, uint8_t color) {
-    if (x >= EPD_WIDTH || y >= EPD_HEIGHT) return;
-    uint32_t addr = (y * EPD_W_BYTES) + (x / 8);
+    // Landscape rotation: 296x128
+    // User requested 296x128 landscape.
+    // The panel is physically 128x296 (SSD1680)
+    // Map (x, y) where 0<=x<296 and 0<=y<128 to physical (nx, ny)
+    uint16_t nx = y;
+    uint16_t ny = 295 - x;
+
+    if (x >= 296 || y >= 128) return;
+    uint32_t addr = (ny * EPD_W_BYTES) + (nx / 8);
+
     if (color == EPD_COLOR_BLACK || color == EPD_COLOR_RED)
-        image_buffer[addr] &= ~(0x80 >> (x % 8));
+        image_buffer[addr] &= ~(0x80 >> (nx % 8));
     else
-        image_buffer[addr] |= (0x80 >> (x % 8));
+        image_buffer[addr] |= (0x80 >> (nx % 8));
 }
 
 void EPD_DrawText(uint16_t x, uint16_t y, const char* text, uint8_t size, uint8_t color) {

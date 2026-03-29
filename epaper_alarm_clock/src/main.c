@@ -1,4 +1,3 @@
-#include "stm32f10x.h"
 #include "pinout.h"
 #include "rtc.h"
 #include "encoder.h"
@@ -23,12 +22,14 @@ static uint8_t alarm_h = 7, alarm_m = 0;
 static bool alarm_enabled = false;
 static int8_t menu_selection = 0;
 
+volatile uint32_t ms_ticks = 0;
 void SysTick_Handler(void) {
-    // 1ms ticks if needed
+    ms_ticks++;
 }
 
 int main(void) {
     SystemInit();
+    SysTick_Config(SystemCoreClock / 1000);
     RTC_Init();
     ENC_Init();
     EPD_Init();
@@ -61,10 +62,16 @@ int main(void) {
                     menu_selection = (menu_selection < 2) ? menu_selection + 1 : 0;
                     UI_DrawMenu(menu_selection);
                 } else if (event == ENC_CLICK) {
-                    if (menu_selection == 0) current_mode = MODE_SET_TIME_H;
-                    else if (menu_selection == 1) current_mode = MODE_SET_ALARM_H;
-                    else if (menu_selection == 2) current_mode = MODE_TOGGLE_ALARM;
-                    // Draw corresponding screens
+                    if (menu_selection == 0) {
+                        current_mode = MODE_SET_TIME_H;
+                        UI_DrawSetTime(&current_time, 0);
+                    } else if (menu_selection == 1) {
+                        current_mode = MODE_SET_ALARM_H;
+                        UI_DrawSetAlarm(alarm_h, alarm_m, 0);
+                    } else if (menu_selection == 2) {
+                        current_mode = MODE_TOGGLE_ALARM;
+                        // Mode toggling handled in next cycle
+                    }
                 }
                 break;
 
@@ -102,6 +109,7 @@ int main(void) {
             case MODE_TOGGLE_ALARM:
                 alarm_enabled = !alarm_enabled;
                 current_mode = MODE_NORMAL;
+                UI_DrawMainScreen(&current_time, alarm_enabled, alarm_h, alarm_m);
                 break;
         }
 
