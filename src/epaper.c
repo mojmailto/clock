@@ -115,6 +115,14 @@ void EPD_DrawText(uint16_t x, uint16_t y, const char* text, uint8_t size, uint8_
                 }
             }
             x += 8;
+        } else if (size == 24) {
+            for (int i = 0; i < 24; i++) {
+                uint16_t line = (asc2_2412[c][i*2] << 8) | asc2_2412[c][i*2+1];
+                for (int j = 0; j < 12; j++) {
+                    if (line & (0x8000 >> j)) EPD_DrawPoint(x + j, y + i, color);
+                }
+            }
+            x += 12;
         } else {
             for (int i = 0; i < 6; i++) {
                 uint8_t line = asc2_0806[c][i];

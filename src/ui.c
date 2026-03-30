@@ -9,7 +9,7 @@ void UI_Init(void) {
     EPD_Init();
 }
 
-void UI_DrawMainScreen(RTC_TimeTypeDef *time, bool alarm_set, uint8_t alarm_h, uint8_t alarm_m) {
+void UI_DrawMainScreen(DateTimeTypeDef *time, bool alarm_set, uint8_t alarm_h, uint8_t alarm_m) {
     char buf[16];
 
     // --- Phase 1: Render Black/White RAM ---
@@ -50,7 +50,7 @@ void UI_DrawMenu(int8_t selection) {
     EPD_DisplayUpdate();
 }
 
-void UI_DrawSetTime(RTC_TimeTypeDef *time, int8_t field) {
+void UI_DrawSetTime(DateTimeTypeDef *time, int8_t field) {
     char buf[32];
     EPD_Clear(EPD_COLOR_WHITE);
     EPD_DrawText(10, 10, "USTAW CZAS:", 16, EPD_COLOR_BLACK);

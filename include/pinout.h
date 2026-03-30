@@ -3,8 +3,7 @@
 
 #include "stm32f1xx_hal.h"
 
-/* RTC: DS1307Z (I2C2) */
-#define RTC_I2C       I2C2
+/* RTC: DS1307Z (Software I2C) */
 #define RTC_SCL_PIN   GPIO_PIN_10
 #define RTC_SCL_PORT  GPIOB
 #define RTC_SDA_PIN   GPIO_PIN_11

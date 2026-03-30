@@ -17,7 +17,7 @@ typedef enum {
 } APP_Mode;
 
 static APP_Mode current_mode = MODE_NORMAL;
-static RTC_TimeTypeDef current_time;
+static DateTimeTypeDef current_time;
 static uint8_t alarm_h = 7, alarm_m = 0;
 static bool alarm_enabled = false;
 static int8_t menu_selection = 0;
@@ -52,7 +52,9 @@ int main(void) {
 
     while (1) {
         ENC_Event event = ENC_GetEvent();
-        RTC_GetTime(&current_time);
+        if (current_mode == MODE_NORMAL) {
+            RTC_GetTime(&current_time);
+        }
 
         switch (current_mode) {
             case MODE_NORMAL:
@@ -89,38 +91,48 @@ int main(void) {
                 break;
 
             case MODE_SET_TIME_H:
-                if (event == ENC_LEFT) current_time.hours = (current_time.hours > 0) ? current_time.hours - 1 : 23;
-                else if (event == ENC_RIGHT) current_time.hours = (current_time.hours < 23) ? current_time.hours + 1 : 0;
-                else if (event == ENC_CLICK) current_mode = MODE_SET_TIME_M;
-                UI_DrawSetTime(&current_time, 0);
+                if (event != ENC_NONE) {
+                    if (event == ENC_LEFT) current_time.hours = (current_time.hours > 0) ? current_time.hours - 1 : 23;
+                    else if (event == ENC_RIGHT) current_time.hours = (current_time.hours < 23) ? current_time.hours + 1 : 0;
+                    else if (event == ENC_CLICK) current_mode = MODE_SET_TIME_M;
+                    UI_DrawSetTime(&current_time, 0);
+                }
                 break;
 
             case MODE_SET_TIME_M:
-                if (event == ENC_LEFT) current_time.minutes = (current_time.minutes > 0) ? current_time.minutes - 1 : 59;
-                else if (event == ENC_RIGHT) current_time.minutes = (current_time.minutes < 59) ? current_time.minutes + 1 : 0;
-                else if (event == ENC_CLICK) {
-                    RTC_SetTime(&current_time);
-                    current_mode = MODE_NORMAL;
-                    UI_DrawMainScreen(&current_time, alarm_enabled, alarm_h, alarm_m);
+                if (event != ENC_NONE) {
+                    if (event == ENC_LEFT) current_time.minutes = (current_time.minutes > 0) ? current_time.minutes - 1 : 59;
+                    else if (event == ENC_RIGHT) current_time.minutes = (current_time.minutes < 59) ? current_time.minutes + 1 : 0;
+                    else if (event == ENC_CLICK) {
+                        RTC_SetTime(&current_time);
+                        current_mode = MODE_NORMAL;
+                        UI_DrawMainScreen(&current_time, alarm_enabled, alarm_h, alarm_m);
+                        break;
+                    }
+                    UI_DrawSetTime(&current_time, 1);
                 }
-                UI_DrawSetTime(&current_time, 1);
                 break;
 
             case MODE_SET_ALARM_H:
-                if (event == ENC_LEFT) alarm_h = (alarm_h > 0) ? alarm_h - 1 : 23;
-                else if (event == ENC_RIGHT) alarm_h = (alarm_h < 23) ? alarm_h + 1 : 0;
-                else if (event == ENC_CLICK) current_mode = MODE_SET_ALARM_M;
-                UI_DrawSetAlarm(alarm_h, alarm_m, 0);
+                if (event != ENC_NONE) {
+                    if (event == ENC_LEFT) alarm_h = (alarm_h > 0) ? alarm_h - 1 : 23;
+                    else if (event == ENC_RIGHT) alarm_h = (alarm_h < 23) ? alarm_h + 1 : 0;
+                    else if (event == ENC_CLICK) current_mode = MODE_SET_ALARM_M;
+                    UI_DrawSetAlarm(alarm_h, alarm_m, 0);
+                }
                 break;
 
             case MODE_SET_ALARM_M:
-                if (event == ENC_LEFT) alarm_m = (alarm_m > 0) ? alarm_m - 1 : 59;
-                else if (event == ENC_RIGHT) alarm_m = (alarm_m < 59) ? alarm_m + 1 : 0;
-                else if (event == ENC_CLICK) {
-                    current_mode = MODE_NORMAL;
-                    UI_DrawMainScreen(&current_time, alarm_enabled, alarm_h, alarm_m);
+                if (event != ENC_NONE) {
+                    if (event == ENC_LEFT) alarm_m = (alarm_m > 0) ? alarm_m - 1 : 59;
+                    else if (event == ENC_RIGHT) alarm_m = (alarm_m < 59) ? alarm_m + 1 : 0;
+                    else if (event == ENC_CLICK) {
+                        current_mode = MODE_NORMAL;
+                        UI_DrawMainScreen(&current_time, alarm_enabled, alarm_h, alarm_m);
+                        break;
+                    }
+                    UI_DrawSetAlarm(alarm_h, alarm_m, 1);
                 }
-                UI_DrawSetAlarm(alarm_h, alarm_m, 1);
                 break;
 
             case MODE_TOGGLE_ALARM:

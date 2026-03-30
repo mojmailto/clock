@@ -12,10 +12,10 @@ typedef struct {
     uint8_t day_of_month;
     uint8_t month;
     uint8_t year;
-} RTC_TimeTypeDef;
+} DateTimeTypeDef;
 
 void RTC_Init(void);
-void RTC_GetTime(RTC_TimeTypeDef *time);
-void RTC_SetTime(RTC_TimeTypeDef *time);
+void RTC_GetTime(DateTimeTypeDef *time);
+void RTC_SetTime(DateTimeTypeDef *time);
 
 #endif /* RTC_H */
