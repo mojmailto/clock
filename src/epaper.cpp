@@ -1,6 +1,7 @@
 #include "epaper.h"
 #include "pinout.h"
 #include "font.h"
+#include <Arduino.h>
 #include <string.h>
 
 #define EPD_W_BYTES ((EPD_WIDTH % 8 == 0) ? (EPD_WIDTH / 8) : (EPD_WIDTH / 8 + 1))
@@ -9,82 +10,71 @@
 static uint8_t image_buffer[EPD_BUFFER_SIZE];
 
 static void EPD_WaitBusy(void) {
-    while (HAL_GPIO_ReadPin(EPD_BUSY_PORT, EPD_BUSY_PIN) == GPIO_PIN_SET);
+    while (digitalRead(EPD_BUSY_PIN) == HIGH) delay(1);
 }
 
 static void SPI_WriteByte(uint8_t data) {
     for (int i = 0; i < 8; i++) {
-        HAL_GPIO_WritePin(EPD_SCL_PORT, EPD_SCL_PIN, GPIO_PIN_RESET);
-        HAL_GPIO_WritePin(EPD_SDA_PORT, EPD_SDA_PIN, (data & 0x80) ? GPIO_PIN_SET : GPIO_PIN_RESET);
-        HAL_GPIO_WritePin(EPD_SCL_PORT, EPD_SCL_PIN, GPIO_PIN_SET);
+        digitalWrite(EPD_SCL_PIN, LOW);
+        digitalWrite(EPD_SDA_PIN, (data & 0x80) ? HIGH : LOW);
+        digitalWrite(EPD_SCL_PIN, HIGH);
         data <<= 1;
     }
 }
 
 static void EPD_WriteCmd(uint8_t cmd) {
-    HAL_GPIO_WritePin(EPD_DC_PORT, EPD_DC_PIN, GPIO_PIN_RESET);
-    HAL_GPIO_WritePin(EPD_CS_PORT, EPD_CS_PIN, GPIO_PIN_RESET);
+    digitalWrite(EPD_DC_PIN, LOW);
+    digitalWrite(EPD_CS_PIN, LOW);
     SPI_WriteByte(cmd);
-    HAL_GPIO_WritePin(EPD_CS_PORT, EPD_CS_PIN, GPIO_PIN_SET);
+    digitalWrite(EPD_CS_PIN, HIGH);
 }
 
 static void EPD_WriteData(uint8_t data) {
-    HAL_GPIO_WritePin(EPD_DC_PORT, EPD_DC_PIN, GPIO_PIN_SET);
-    HAL_GPIO_WritePin(EPD_CS_PORT, EPD_CS_PIN, GPIO_PIN_RESET);
+    digitalWrite(EPD_DC_PIN, HIGH);
+    digitalWrite(EPD_CS_PIN, LOW);
     SPI_WriteByte(data);
-    HAL_GPIO_WritePin(EPD_CS_PORT, EPD_CS_PIN, GPIO_PIN_SET);
+    digitalWrite(EPD_CS_PIN, HIGH);
 }
 
 void EPD_Init(void) {
-    GPIO_InitTypeDef GPIO_InitStruct = {0};
+    pinMode(EPD_SCL_PIN, OUTPUT);
+    pinMode(EPD_SDA_PIN, OUTPUT);
+    pinMode(EPD_CS_PIN, OUTPUT);
+    pinMode(EPD_DC_PIN, OUTPUT);
+    pinMode(EPD_RES_PIN, OUTPUT);
+    pinMode(EPD_BUSY_PIN, INPUT);
 
-    __HAL_RCC_GPIOA_CLK_ENABLE();
-    __HAL_RCC_GPIOB_CLK_ENABLE();
-
-    GPIO_InitStruct.Pin = EPD_SCL_PIN | EPD_SDA_PIN;
-    GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
-    HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
-
-    GPIO_InitStruct.Pin = EPD_CS_PIN | EPD_DC_PIN | EPD_RES_PIN;
-    HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
-
-    GPIO_InitStruct.Pin = EPD_BUSY_PIN;
-    GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-    GPIO_InitStruct.Pull = GPIO_NOPULL;
-    HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
-
-    HAL_GPIO_WritePin(EPD_RES_PORT, EPD_RES_PIN, GPIO_PIN_RESET);
-    HAL_Delay(10);
-    HAL_GPIO_WritePin(EPD_RES_PORT, EPD_RES_PIN, GPIO_PIN_SET);
-    HAL_Delay(10);
+    digitalWrite(EPD_RES_PIN, LOW);
+    delay(10);
+    digitalWrite(EPD_RES_PIN, HIGH);
+    delay(10);
 
     EPD_WaitBusy();
-    EPD_WriteCmd(0x12);
+    EPD_WriteCmd(0x12); // Soft Reset
     EPD_WaitBusy();
 
-    EPD_WriteCmd(0x01);
+    EPD_WriteCmd(0x01); // Driver output control
     EPD_WriteData(0x27);
     EPD_WriteData(0x01);
     EPD_WriteData(0x00);
 
-    EPD_WriteCmd(0x11);
+    EPD_WriteCmd(0x11); // Data entry mode
     EPD_WriteData(0x01);
 
-    EPD_WriteCmd(0x44);
+    EPD_WriteCmd(0x44); // Set RAM X start/end position
     EPD_WriteData(0x00);
     EPD_WriteData(0x0F);
 
-    EPD_WriteCmd(0x45);
+    EPD_WriteCmd(0x45); // Set RAM Y start/end position
     EPD_WriteData(0x27);
     EPD_WriteData(0x01);
     EPD_WriteData(0x00);
     EPD_WriteData(0x00);
 
-    EPD_WriteCmd(0x3C);
+    EPD_WriteCmd(0x3C); // BorderWavefrom
     EPD_WriteData(0x05);
 
-    EPD_WriteCmd(0x21);
+    EPD_WriteCmd(0x21); // Display update control
     EPD_WriteData(0x00);
     EPD_WriteData(0x80);
 }

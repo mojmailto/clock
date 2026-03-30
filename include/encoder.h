@@ -1,7 +1,6 @@
 #ifndef ENCODER_H
 #define ENCODER_H
 
-#include "stm32f1xx_hal.h"
 #include <stdint.h>
 #include <stdbool.h>
 

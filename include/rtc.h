@@ -1,7 +1,6 @@
 #ifndef RTC_H
 #define RTC_H
 
-#include "stm32f1xx_hal.h"
 #include <stdint.h>
 
 typedef struct {
