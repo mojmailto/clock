@@ -30,7 +30,10 @@ static void IRAM_ATTR button_isr() {
 void ENC_Init(void) {
     pinMode(ENC_CLK_PIN, INPUT_PULLUP);
     pinMode(ENC_DT_PIN, INPUT_PULLUP);
-    pinMode(ENC_SW_PIN, INPUT_PULLUP);
+
+    // On ESP32-DEVKITV1, GPIO 35 is input-only and lacks internal pull-up resistors.
+    // The user must provide an external pull-up resistor (e.g., 10k) for the button to work.
+    pinMode(ENC_SW_PIN, INPUT);
 
     attachInterrupt(digitalPinToInterrupt(ENC_CLK_PIN), encoder_isr, CHANGE);
     attachInterrupt(digitalPinToInterrupt(ENC_SW_PIN), button_isr, FALLING);

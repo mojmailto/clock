@@ -28,6 +28,10 @@ void setup() {
     ENC_Init();
     EPD_Init();
     UI_Init();
+
+    // Force initial screen draw
+    RTC_GetTime(&current_time);
+    UI_DrawMainScreen(&current_time, alarm_enabled, alarm_h, alarm_m);
 }
 
 void loop() {
@@ -124,7 +128,6 @@ void loop() {
     }
 
     if (alarm_enabled && current_time.hours == alarm_h && current_time.minutes == alarm_m && current_time.seconds == 0) {
-        // Optional buzzer logic could be added here
         Serial.println("ALARM!");
     }
 
